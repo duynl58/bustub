@@ -10,39 +10,69 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "common/logger.h"
 #include "buffer/clock_replacer.h"
 
 namespace bustub {
 
-ClockReplacer::ClockReplacer(size_t num_pages) : num_frames_{num_pages}, current_pos_{0} {
+ClockReplacer::ClockReplacer(size_t num_pages) : num_frames_{num_pages} {
     this->ref_flag_.clear();
+    this->pin_pos_.clear();
     this->frames_.clear();
-    this->frames_.resize(num_pages, -1);
+    this->clock_hand_ = this->frames_.begin();
 }
 
 ClockReplacer::~ClockReplacer() = default;
 
 bool ClockReplacer::Victim(frame_id_t *frame_id) {
-    const std::lock_guard<std::shared_mutex> guard(this->clock_hand_mux_);
-    auto old_pos = this->current_pos_;
-    do {
-        auto f_id = this->frames_[this->current_pos_];
+    if (this->Size() <= 0) {
+        frame_id = nullptr;
+        return false;
+    }
+    while (true) {
+        if (this->clock_hand_ == this->frames_.end())
+            this->clock_hand_ = this->frames_.begin();
+        auto f_id = *(this->clock_hand_);
+        LOG_INFO("Clocking frame %d - ref status %s", f_id, this->ref_flag_[f_id] ? "true" : "false");
         if (f_id >= 0 && !this->ref_flag_[f_id]) {
             *frame_id = f_id;
+            // remove the frame
+            this->Pin(f_id);
             return true;
         }
         // set ref_flag of f_id to false (cause it's true)
         if (f_id >= 0) this->ref_flag_[f_id] = false;
-        this->current_pos_ = (this->current_pos_ + 1) % this->num_frames_;
-    } while (this->current_pos_ != old_pos);
+        // rotate the clock hand
+        this->clock_hand_ ++;
+    }
     frame_id = nullptr;
     return false;
 }
 
-void ClockReplacer::Pin(frame_id_t frame_id) {}
+void ClockReplacer::Pin(frame_id_t frame_id) {
+    auto found_iterator = this->pin_pos_.find(frame_id);
+    if (found_iterator != this->pin_pos_.end()) {
+        if (found_iterator->second == this->clock_hand_)
+            this->clock_hand_ ++;
+        this->ref_flag_.erase(frame_id);
+        this->frames_.erase(found_iterator->second);
+        this->pin_pos_.erase(frame_id);
+    }
+}
 
-void ClockReplacer::Unpin(frame_id_t frame_id) {}
+void ClockReplacer::Unpin(frame_id_t frame_id) {
+    if (this->ref_flag_.find(frame_id) != this->ref_flag_.end()) {
+        this->ref_flag_[frame_id] = true;
+        return;
+    };
+    this->frames_.push_back(frame_id);
+    this->ref_flag_.insert({frame_id, true});
+    this->pin_pos_.insert({frame_id, std::prev(this->frames_.end())});
+}
 
-size_t ClockReplacer::Size() { return 0; }
+size_t ClockReplacer::Size() {
+    // TODO: shared lock here
+    return this->frames_.size();
+}
 
 }  // namespace bustub

@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <vector>
+#include <list>
 #include <shared_mutex>
 #include <unordered_map>
 
@@ -47,10 +47,11 @@ class ClockReplacer : public Replacer {
 
  private:
   // TODO(student): implement me!
-  size_t num_frames_, current_pos_;
-  std::shared_mutex clock_hand_mux_;
-  std::vector<frame_id_t> frames_;
+  size_t num_frames_;
+  std::list<frame_id_t> frames_;
+  std::list<frame_id_t>::iterator clock_hand_;
   std::unordered_map<frame_id_t, bool> ref_flag_;
+  std::unordered_map<frame_id_t, std::list<frame_id_t>::iterator> pin_pos_;
 };
 
 }  // namespace bustub
