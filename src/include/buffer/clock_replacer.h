@@ -13,7 +13,7 @@
 #pragma once
 
 #include <list>
-#include <shared_mutex>
+#include <mutex>    // NOLINT
 #include <unordered_map>
 
 #include "buffer/replacer.h"
@@ -46,8 +46,10 @@ class ClockReplacer : public Replacer {
   size_t Size() override;
 
  private:
-  // TODO(student): implement me!
-  size_t num_frames_;
+  // a non-thread-safe implementation for unpinning page
+  void PinImpl(frame_id_t frame_id);
+
+  std::mutex mux_;
   std::list<frame_id_t> frames_;
   std::list<frame_id_t>::iterator clock_hand_;
   std::unordered_map<frame_id_t, bool> ref_flag_;
