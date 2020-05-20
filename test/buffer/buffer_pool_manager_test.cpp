@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "common/logger.h"
 #include "buffer/buffer_pool_manager.h"
 #include <cstdio>
 #include <string>
@@ -115,11 +116,13 @@ TEST(BufferPoolManagerTest, SampleTest) {
     EXPECT_EQ(true, bpm->UnpinPage(i, true));
   }
   for (int i = 0; i < 4; ++i) {
+    LOG_INFO("New page %d", int(page_id_temp));
     EXPECT_NE(nullptr, bpm->NewPage(&page_id_temp));
   }
 
   // Scenario: We should be able to fetch the data we wrote a while ago.
   page0 = bpm->FetchPage(0);
+  LOG_INFO("Data: %s", page0->GetData());
   EXPECT_EQ(0, strcmp(page0->GetData(), "Hello"));
 
   // Scenario: If we unpin page 0 and then make a new page, all the buffer pages should

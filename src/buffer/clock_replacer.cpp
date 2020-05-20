@@ -35,7 +35,6 @@ bool ClockReplacer::Victim(frame_id_t *frame_id) {
         this->clock_hand_ = this->frames_.begin();
     }
     auto f_id = *(this->clock_hand_);
-    LOG_INFO("Clocking frame %d - ref status %s", f_id, this->ref_flag_[f_id] ? "true" : "false");
     if (f_id >= 0 && !this->ref_flag_[f_id]) {
       *frame_id = f_id;
       // remove the frame
