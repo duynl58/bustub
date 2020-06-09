@@ -116,7 +116,7 @@ TEST(BufferPoolManagerTest, SampleTest) {
     EXPECT_EQ(true, bpm->UnpinPage(i, true));
   }
   for (int i = 0; i < 4; ++i) {
-    LOG_INFO("New page %d", int(page_id_temp));
+    LOG_INFO("New page %d", static_cast<int>(page_id_temp));
     EXPECT_NE(nullptr, bpm->NewPage(&page_id_temp));
   }
 

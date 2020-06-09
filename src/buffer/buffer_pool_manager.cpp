@@ -13,9 +13,6 @@
 #include "buffer/buffer_pool_manager.h"
 #include "common/logger.h"
 
-#include <list>
-#include <unordered_map>
-
 namespace bustub {
 
 BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager, LogManager *log_manager)
@@ -46,23 +43,22 @@ bool BufferPoolManager::allPinned() {
   return true;
 }
 
-frame_id_t BufferPoolManager::victimPage(Page *&page) {
+frame_id_t BufferPoolManager::victimPage() {
   frame_id_t frame_id;
   if (!free_list_.empty()) {
     frame_id = free_list_.front();
     free_list_.pop_front();
-    page = GetPages() + frame_id;
-  } else {
-    if (!replacer_->Victim(&frame_id)) {
-      return -1;
-    }
-    page = GetPages() + frame_id;
-    LOG_INFO("Page id %d, is dirty %d", page->page_id_, page->IsDirty());
-    page_table_.erase(page->GetPageId());
-    if (page->IsDirty()) {
-      LOG_INFO("Page %d is dirty, writing", page->GetPageId());
-      disk_manager_->WritePage(page->GetPageId(), page->GetData());
-    }
+    return frame_id;
+  }
+  if (!replacer_->Victim(&frame_id)) {
+    return -1;
+  }
+  auto page = GetPages() + frame_id;
+  LOG_DEBUG("Page id %d, is dirty %d", page->page_id_, page->IsDirty());
+  page_table_.erase(page->GetPageId());
+  if (page->IsDirty()) {
+    LOG_DEBUG("Page %d is dirty, writing", page->GetPageId());
+    disk_manager_->WritePage(page->GetPageId(), page->GetData());
   }
   return frame_id;
 }
@@ -86,9 +82,9 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
     return GetPages() + iterator->second;
   }
   // step 2. (includes step 1.2.)
-  Page *page;
-  auto frame_id = this->victimPage(page);
+  auto frame_id = this->victimPage();
   if (frame_id < 0) return nullptr;
+  auto page = GetPages() + frame_id;
   // step 3.
   page_table_.insert({page_id, frame_id});
   // step 4.
@@ -124,7 +120,7 @@ bool BufferPoolManager::FlushPageImpl(page_id_t page_id) {
   }
   auto page = GetPages() + iterator->second;
   disk_manager_->WritePage(page_id, page->GetData());
-  // TODO: is it necessary to mark it clean (not dirty)???
+  // TODO(duynl58): is it necessary to mark it clean (not dirty)???
   return true;
 }
 
@@ -137,11 +133,10 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
   // step 1.
   if (this->allPinned()) return nullptr;
   // step 2.
-  Page *page;
-  auto frame_id = this->victimPage(page);
+  auto frame_id = this->victimPage();
   if (frame_id < 0) return nullptr;
-  LOG_INFO("Frame to be victimized %d", frame_id);
-  LOG_INFO("%d", page == nullptr);
+  auto page = GetPages() + frame_id;
+  LOG_DEBUG("Frame to be victimized %d", frame_id);
   // step 3.
   page->page_id_ = disk_manager_->AllocatePage();
   page->ResetMemory();

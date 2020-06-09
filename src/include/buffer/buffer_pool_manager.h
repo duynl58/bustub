@@ -147,7 +147,7 @@ class BufferPoolManager {
    */
   bool DeletePageImpl(page_id_t page_id);
 
-  frame_id_t victimPage(Page *&page);
+  frame_id_t victimPage();
   bool allPinned();
 
   /**
