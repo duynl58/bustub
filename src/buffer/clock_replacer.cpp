@@ -32,7 +32,7 @@ bool ClockReplacer::Victim(frame_id_t *frame_id) {
   }
   while (true) {
     if (this->clock_hand_ == this->frames_.end()) {
-        this->clock_hand_ = this->frames_.begin();
+      this->clock_hand_ = this->frames_.begin();
     }
     auto f_id = *(this->clock_hand_);
     if (f_id >= 0 && !this->ref_flag_[f_id]) {
@@ -43,7 +43,7 @@ bool ClockReplacer::Victim(frame_id_t *frame_id) {
     }
     // set ref_flag of f_id to false (cause it's true)
     if (f_id >= 0) {
-        this->ref_flag_[f_id] = false;
+      this->ref_flag_[f_id] = false;
     }
     // rotate the clock hand
     this->clock_hand_++;

@@ -133,7 +133,7 @@ class HashJoinExecutor : public AbstractExecutor {
   /** The hash join plan node. */
   const HashJoinPlanNode *plan_;
   /** The comparator is used to compare hashes. */
-  [[maybe_unused]] HashComparator jht_comp_{};
+  [[maybe_unused]] HashComparator jht_comp_ {};
   /** The identity hash function. */
   IdentityHashFunction jht_hash_fn_{};
 

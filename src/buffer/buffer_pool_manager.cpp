@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/logger.h"
 #include "buffer/buffer_pool_manager.h"
+#include "common/logger.h"
 
 #include <list>
 #include <unordered_map>
@@ -36,7 +36,7 @@ BufferPoolManager::~BufferPoolManager() {
 }
 
 bool BufferPoolManager::allPinned() {
-  for(size_t fid = 0; fid < this->pool_size_; fid++) {
+  for (size_t fid = 0; fid < this->pool_size_; fid++) {
     auto page = GetPages() + fid;
     if (page->pin_count_ <= 0) {
       return false;
@@ -46,7 +46,7 @@ bool BufferPoolManager::allPinned() {
   return true;
 }
 
-frame_id_t BufferPoolManager::victimPage(Page*& page) {
+frame_id_t BufferPoolManager::victimPage(Page *&page) {
   frame_id_t frame_id;
   if (!free_list_.empty()) {
     frame_id = free_list_.front();
@@ -67,7 +67,6 @@ frame_id_t BufferPoolManager::victimPage(Page*& page) {
   return frame_id;
 }
 
-
 Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
   // 1.     Search the page table for the requested page (P).
   // 1.1    If P exists, pin it and return it immediately.
@@ -87,7 +86,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
     return GetPages() + iterator->second;
   }
   // step 2. (includes step 1.2.)
-  Page* page;
+  Page *page;
   auto frame_id = this->victimPage(page);
   if (frame_id < 0) return nullptr;
   // step 3.
@@ -108,7 +107,7 @@ bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
     return false;
   }
   auto page = GetPages() + iterator->second;
-  page->pin_count_ --;
+  page->pin_count_--;
   if (page->pin_count_ <= 0) {
     replacer_->Unpin(iterator->second);
   }
@@ -138,7 +137,7 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
   // step 1.
   if (this->allPinned()) return nullptr;
   // step 2.
-  Page* page;
+  Page *page;
   auto frame_id = this->victimPage(page);
   if (frame_id < 0) return nullptr;
   LOG_INFO("Frame to be victimized %d", frame_id);
