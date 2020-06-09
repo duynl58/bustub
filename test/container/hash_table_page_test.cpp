@@ -61,7 +61,7 @@ TEST(HashTablePageTest, HeaderPageSampleTest) {
 }
 
 // NOLINTNEXTLINE
-TEST(HashTablePageTest, DISABLED_BlockPageSampleTest) {
+TEST(HashTablePageTest, BlockPageSampleTest) {
   DiskManager *disk_manager = new DiskManager("test.db");
   auto *bpm = new BufferPoolManager(5, disk_manager);
 
@@ -102,6 +102,22 @@ TEST(HashTablePageTest, DISABLED_BlockPageSampleTest) {
       EXPECT_FALSE(block_page->IsOccupied(i));
     }
   }
+
+  // concurrency insert
+  std::atomic_int success_add(0);
+  std::thread first([block_page, &success_add]() {
+    for (unsigned i = 0; i < 15; i++) {
+      if (block_page->Insert(i, i, i)) success_add++;
+    }
+  });
+  std::thread second([block_page, &success_add]() {
+    for (unsigned i = 0; i < 15; i++) {
+      if (block_page->Insert(i, i, i)) success_add++;
+    }
+  });
+  first.join();
+  second.join();
+  EXPECT_EQ(success_add, 10);
 
   // unpin the header page now that we are done
   bpm->UnpinPage(block_page_id, true, nullptr);

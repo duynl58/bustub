@@ -10,37 +10,54 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "storage/page/hash_table_block_page.h"
+#include <exception>
+
 #include "storage/index/generic_key.h"
+#include "storage/page/hash_table_block_page.h"
 
 namespace bustub {
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 KeyType HASH_TABLE_BLOCK_TYPE::KeyAt(slot_offset_t bucket_ind) const {
-  return {};
+  if (!this->IsReadable(bucket_ind)) {
+    throw std::runtime_error("Bucket " + std::to_string(bucket_ind) + "is not readable");
+  }
+  return this->array_[bucket_ind].first;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 ValueType HASH_TABLE_BLOCK_TYPE::ValueAt(slot_offset_t bucket_ind) const {
-  return {};
+  if (!this->IsReadable(bucket_ind)) {
+    throw std::runtime_error("Bucket " + std::to_string(bucket_ind) + "is not readable");
+  }
+  return this->array_[bucket_ind].second;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BLOCK_TYPE::Insert(slot_offset_t bucket_ind, const KeyType &key, const ValueType &value) {
-  return false;
+  char expected = 0;
+  if (!this->readable_[bucket_ind].compare_exchange_weak(expected, static_cast<char>(1))) {
+    return false;
+  }
+  this->array_[bucket_ind] = std::make_pair(key, value);
+  this->occupied_[bucket_ind] = 1;
+  return true;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
-void HASH_TABLE_BLOCK_TYPE::Remove(slot_offset_t bucket_ind) {}
+void HASH_TABLE_BLOCK_TYPE::Remove(slot_offset_t bucket_ind) {
+  char expected = 1;
+  this->readable_[bucket_ind].compare_exchange_weak(expected, static_cast<char>(0));
+}
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BLOCK_TYPE::IsOccupied(slot_offset_t bucket_ind) const {
-  return false;
+  return this->occupied_[bucket_ind] == 1;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BLOCK_TYPE::IsReadable(slot_offset_t bucket_ind) const {
-  return false;
+  return this->readable_[bucket_ind] == 1;
 }
 
 // DO NOT REMOVE ANYTHING BELOW THIS LINE
