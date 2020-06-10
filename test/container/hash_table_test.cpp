@@ -20,6 +20,22 @@
 
 namespace bustub {
 
+TEST(HashTableTest, HashTable_Constructor) {
+  auto *disk_manager = new DiskManager("test.db");
+  auto *bpm = new BufferPoolManager(50, disk_manager);
+
+  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 1000, HashFunction<int>());
+
+  EXPECT_EQ(ht.GetSize(), 1000);
+  ht.Resize(20);
+  EXPECT_EQ(ht.GetSize(), 40);
+
+  disk_manager->ShutDown();
+  remove("test.db");
+  delete disk_manager;
+  delete bpm;
+}
+
 // NOLINTNEXTLINE
 TEST(HashTableTest, DISABLED_SampleTest) {
   auto *disk_manager = new DiskManager("test.db");

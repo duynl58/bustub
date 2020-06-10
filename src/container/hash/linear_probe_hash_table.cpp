@@ -26,7 +26,14 @@ template <typename KeyType, typename ValueType, typename KeyComparator>
 HASH_TABLE_TYPE::LinearProbeHashTable(const std::string &name, BufferPoolManager *buffer_pool_manager,
                                       const KeyComparator &comparator, size_t num_buckets,
                                       HashFunction<KeyType> hash_fn)
-    : buffer_pool_manager_(buffer_pool_manager), comparator_(comparator), hash_fn_(std::move(hash_fn)) {}
+    : name_(name), buffer_pool_manager_(buffer_pool_manager), comparator_(comparator), hash_fn_(std::move(hash_fn)) {
+  auto page = buffer_pool_manager->NewPage(&(this->header_page_id_));
+  if (page == nullptr) {
+    throw new Exception("Can't initialize header page");
+  }
+  auto header_page = reinterpret_cast<HashTableHeaderPage *>(page->GetData());
+  header_page->SetSize(num_buckets);
+}
 
 /*****************************************************************************
  * SEARCH
@@ -55,14 +62,20 @@ bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const
  * RESIZE
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
-void HASH_TABLE_TYPE::Resize(size_t initial_size) {}
+void HASH_TABLE_TYPE::Resize(size_t initial_size) {
+  auto header_page =
+      reinterpret_cast<HashTableHeaderPage *>(this->buffer_pool_manager_->FetchPage(this->header_page_id_)->GetData());
+  header_page->SetSize(initial_size * 2);
+}
 
 /*****************************************************************************
  * GETSIZE
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 size_t HASH_TABLE_TYPE::GetSize() {
-  return 0;
+  auto header_page =
+      reinterpret_cast<HashTableHeaderPage *>(this->buffer_pool_manager_->FetchPage(this->header_page_id_)->GetData());
+  return header_page->GetSize();
 }
 
 template class LinearProbeHashTable<int, int, IntComparator>;

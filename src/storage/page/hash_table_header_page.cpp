@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <stdexcept>
-
 #include "storage/page/hash_table_header_page.h"
+#include "common/exception.h"
+#include "common/logger.h"
 
 namespace bustub {
 page_id_t HashTableHeaderPage::GetBlockPageId(size_t index) { return this->block_page_ids_[index]; }
@@ -27,7 +27,7 @@ void HashTableHeaderPage::SetLSN(lsn_t lsn) { this->lsn_ = lsn; }
 
 void HashTableHeaderPage::AddBlockPageId(page_id_t page_id) {
   if (next_ind_ > this->GetSize()) {
-    throw std::invalid_argument("Reach limit of block_page_ids_");
+    throw new Exception("Reach limit of block_page_ids_");
   }
   this->block_page_ids_[next_ind_] = page_id;
   next_ind_++;
