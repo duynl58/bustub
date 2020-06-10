@@ -24,11 +24,13 @@ TEST(HashTableTest, HashTable_Constructor) {
   auto *disk_manager = new DiskManager("test.db");
   auto *bpm = new BufferPoolManager(50, disk_manager);
 
-  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 1000, HashFunction<int>());
+  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 10, HashFunction<int>());
 
-  EXPECT_EQ(ht.GetSize(), 1000);
-  ht.Resize(20);
-  EXPECT_EQ(ht.GetSize(), 40);
+  EXPECT_EQ(ht.GetSize(), 10);
+  ht.Resize(2);
+  EXPECT_EQ(ht.GetSize(), 10);  // do not reduce in size
+  ht.Resize(10);
+  EXPECT_EQ(ht.GetSize(), 20);  // double the size
 
   disk_manager->ShutDown();
   remove("test.db");

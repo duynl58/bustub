@@ -87,6 +87,9 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
   size_t GetSize();
 
  private:
+  HashTableHeaderPage *getHeaderPage();
+  HashTableBlockPage<KeyType, ValueType, KeyComparator> *getBlockPage(HashTableHeaderPage *header_page,
+                                                                      size_t bucket_ind);
   // member variable
   std::string name_;
   page_id_t header_page_id_;

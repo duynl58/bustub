@@ -33,6 +33,12 @@ HASH_TABLE_TYPE::LinearProbeHashTable(const std::string &name, BufferPoolManager
   }
   auto header_page = reinterpret_cast<HashTableHeaderPage *>(page->GetData());
   header_page->SetSize(num_buckets);
+  for (size_t index = 0; index < num_buckets; index++) {
+    LOG_DEBUG("Add block no %d", static_cast<int>(index));
+    page_id_t next_block_id;
+    buffer_pool_manager->NewPage(&next_block_id);
+    header_page->AddBlockPageId(next_block_id);
+  }
 }
 
 /*****************************************************************************
@@ -47,6 +53,14 @@ bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const ValueType &value) {
+  // TODO(duynl58) - Lock this transaction, possibly lock the `block` before inserting
+  auto header_page = this->getHeaderPage();
+  auto expected_index = this->hash_fn_.GetHash(key);
+  for (auto index = expected_index; index < header_page->GetSize(); ++index) {
+    auto block = this->getBlockPage(header_page, index / BLOCK_ARRAY_SIZE);
+    auto success = block->Insert(index % BLOCK_ARRAY_SIZE, key, value);
+    if (success) return true;
+  }
   return false;
 }
 
@@ -63,9 +77,18 @@ bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_TYPE::Resize(size_t initial_size) {
-  auto header_page =
-      reinterpret_cast<HashTableHeaderPage *>(this->buffer_pool_manager_->FetchPage(this->header_page_id_)->GetData());
-  header_page->SetSize(initial_size * 2);
+  // TODO(duynl58) Lock this hash table before resizing
+  auto header_page = this->getHeaderPage();
+  auto expected_size = initial_size * 2;
+  // only grow up in size
+  if (header_page->GetSize() > expected_size) return;
+  auto old_size = header_page->GetSize();
+  header_page->SetSize(expected_size);
+  for (auto index = old_size; index < expected_size; index++) {
+    page_id_t next_block_id;
+    this->buffer_pool_manager_->NewPage(&next_block_id);
+    header_page->AddBlockPageId(next_block_id);
+  }
 }
 
 /*****************************************************************************
@@ -73,9 +96,21 @@ void HASH_TABLE_TYPE::Resize(size_t initial_size) {
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 size_t HASH_TABLE_TYPE::GetSize() {
-  auto header_page =
-      reinterpret_cast<HashTableHeaderPage *>(this->buffer_pool_manager_->FetchPage(this->header_page_id_)->GetData());
-  return header_page->GetSize();
+  // TODO(duynl58) Acquire READ latch before return Size()
+  return this->getHeaderPage()->GetSize();
+}
+
+template <typename KeyType, typename ValueType, typename KeyComparator>
+HashTableHeaderPage *HASH_TABLE_TYPE::getHeaderPage() {
+  return reinterpret_cast<HashTableHeaderPage *>(
+      this->buffer_pool_manager_->FetchPage(this->header_page_id_)->GetData());
+}
+
+template <typename KeyType, typename ValueType, typename KeyComparator>
+HashTableBlockPage<KeyType, ValueType, KeyComparator> *HASH_TABLE_TYPE::getBlockPage(HashTableHeaderPage *header_page,
+                                                                                     size_t bucket_ind) {
+  return reinterpret_cast<HashTableBlockPage<KeyType, ValueType, KeyComparator> *>(
+      this->buffer_pool_manager_->FetchPage(header_page->GetBlockPageId(bucket_ind))->GetData());
 }
 
 template class LinearProbeHashTable<int, int, IntComparator>;
