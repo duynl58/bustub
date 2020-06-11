@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <exception>
+#include <iterator>
 
 #include "storage/index/generic_key.h"
 #include "storage/page/hash_table_block_page.h"
@@ -37,7 +38,7 @@ ValueType HASH_TABLE_BLOCK_TYPE::ValueAt(slot_offset_t bucket_ind) const {
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BLOCK_TYPE::Insert(slot_offset_t bucket_ind, const KeyType &key, const ValueType &value) {
   char expected = 0;
-  if (!this->readable_[bucket_ind].compare_exchange_weak(expected, static_cast<char>(1))) {
+  if (!this->readable_[bucket_ind].compare_exchange_strong(expected, 1)) {
     return false;
   }
   this->array_[bucket_ind] = std::make_pair(key, value);
@@ -59,6 +60,11 @@ bool HASH_TABLE_BLOCK_TYPE::IsOccupied(slot_offset_t bucket_ind) const {
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BLOCK_TYPE::IsReadable(slot_offset_t bucket_ind) const {
   return this->readable_[bucket_ind] == 1;
+}
+
+template <typename KeyType, typename ValueType, typename KeyComparator>
+size_t HASH_TABLE_BLOCK_TYPE::NumberOfSlots() const {
+  return std::size(this->readable_);
 }
 
 // DO NOT REMOVE ANYTHING BELOW THIS LINE

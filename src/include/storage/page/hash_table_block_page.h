@@ -93,6 +93,13 @@ class HashTableBlockPage {
    */
   bool IsReadable(slot_offset_t bucket_ind) const;
 
+  /**
+   * Returns number of slots that this block page can contain
+   *
+   * @return Number of slots
+   */
+  size_t NumberOfSlots() const;
+
  private:
   std::atomic_char occupied_[(BLOCK_ARRAY_SIZE - 1) / 8 + 1];
 

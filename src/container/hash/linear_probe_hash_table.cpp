@@ -43,6 +43,7 @@ template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std::vector<ValueType> *result) {
   return false;
 }
+
 /*****************************************************************************
  * INSERTION
  *****************************************************************************/

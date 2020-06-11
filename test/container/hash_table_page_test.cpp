@@ -104,21 +104,24 @@ TEST(HashTablePageTest, BlockPageSampleTest) {
   }
 
   // concurrency insert
-  std::atomic_int success_add(0);
-  std::thread first([block_page, &success_add]() {
-    for (unsigned i = 0; i < 15; i++) {
-      if (block_page->Insert(i, i, i)) success_add++;
+  int max_size = block_page->NumberOfSlots();
+  std::thread first([block_page, &max_size]() {
+    for (auto i = 0; i < max_size; i++) {
+      block_page->Insert(i, i, i);
     }
   });
-  std::thread second([block_page, &success_add]() {
-    for (unsigned i = 0; i < 15; i++) {
-      if (block_page->Insert(i, i, i)) success_add++;
+  std::thread second([block_page, &max_size]() {
+    for (auto i = 0; i < max_size; i++) {
+      block_page->Insert(i, i, i);
     }
   });
   first.join();
   second.join();
-  EXPECT_EQ(success_add, 10);
-
+  for(auto i = 0; i < max_size; i++) {
+    EXPECT_TRUE(block_page->IsReadable(i));
+    EXPECT_EQ(block_page->KeyAt(i), i);
+    EXPECT_EQ(block_page->ValueAt(i), i);
+  }
   // unpin the header page now that we are done
   bpm->UnpinPage(block_page_id, true, nullptr);
   disk_manager->ShutDown();
