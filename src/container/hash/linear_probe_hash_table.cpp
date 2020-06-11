@@ -97,7 +97,6 @@ size_t HASH_TABLE_TYPE::GetSize() {
   return this->HeaderPage()->GetSize();
 }
 
-
 /*****************************************************************************
  * UTILITIES
  *****************************************************************************/
@@ -109,18 +108,18 @@ HashTableHeaderPage *HASH_TABLE_TYPE::HeaderPage() {
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 HashTableBlockPage<KeyType, ValueType, KeyComparator> *HASH_TABLE_TYPE::BlockPage(HashTableHeaderPage *header_page,
-                                                                                     size_t bucket_ind) {
+                                                                                  size_t bucket_ind) {
   return reinterpret_cast<HashTableBlockPage<KeyType, ValueType, KeyComparator> *>(
       this->buffer_pool_manager_->FetchPage(header_page->GetBlockPageId(bucket_ind))->GetData());
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
-slot_offset_t HASH_TABLE_TYPE::GetSlotIndex(const KeyType& key) {
+slot_offset_t HASH_TABLE_TYPE::GetSlotIndex(const KeyType &key) {
   return this->hash_fn_.GetHash(key) % this->HeaderPage()->GetSize();
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
-void HASH_TABLE_TYPE::appendBuckets(HashTableHeaderPage* header_page, size_t num_buckets) {
+void HASH_TABLE_TYPE::appendBuckets(HashTableHeaderPage *header_page, size_t num_buckets) {
   size_t total_current_buckets = header_page->NumBlocks() * BLOCK_ARRAY_SIZE;
   for (; total_current_buckets < num_buckets; total_current_buckets += BLOCK_ARRAY_SIZE) {
     page_id_t next_block_id;
@@ -130,7 +129,6 @@ void HASH_TABLE_TYPE::appendBuckets(HashTableHeaderPage* header_page, size_t num
     header_page->AddBlockPageId(next_block_id);
   }
 }
-
 
 template class LinearProbeHashTable<int, int, IntComparator>;
 

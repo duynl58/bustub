@@ -117,7 +117,7 @@ TEST(HashTablePageTest, BlockPageSampleTest) {
   });
   first.join();
   second.join();
-  for(auto i = 0; i < max_size; i++) {
+  for (auto i = 0; i < max_size; i++) {
     EXPECT_TRUE(block_page->IsReadable(i));
     EXPECT_EQ(block_page->KeyAt(i), i);
     EXPECT_EQ(block_page->ValueAt(i), i);

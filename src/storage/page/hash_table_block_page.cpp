@@ -13,9 +13,9 @@
 #include <exception>
 #include <iterator>
 
+#include "common/logger.h"
 #include "storage/index/generic_key.h"
 #include "storage/page/hash_table_block_page.h"
-#include "common/logger.h"
 
 namespace bustub {
 
