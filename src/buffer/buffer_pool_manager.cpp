@@ -13,6 +13,8 @@
 #include "buffer/buffer_pool_manager.h"
 #include "common/logger.h"
 
+// TODO(duynl58): remember to use RWLatch for all pages
+
 namespace bustub {
 
 BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager, LogManager *log_manager)
@@ -120,7 +122,7 @@ bool BufferPoolManager::FlushPageImpl(page_id_t page_id) {
   }
   auto page = GetPages() + iterator->second;
   disk_manager_->WritePage(page_id, page->GetData());
-  // TODO(duynl58): is it necessary to mark it clean (not dirty)???
+  page->is_dirty_ = false;
   return true;
 }
 

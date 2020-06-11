@@ -33,12 +33,7 @@ HASH_TABLE_TYPE::LinearProbeHashTable(const std::string &name, BufferPoolManager
   }
   auto header_page = reinterpret_cast<HashTableHeaderPage *>(page->GetData());
   header_page->SetSize(num_buckets);
-  for (size_t index = 0; index < num_buckets; index++) {
-    LOG_DEBUG("Add block no %d", static_cast<int>(index));
-    page_id_t next_block_id;
-    buffer_pool_manager->NewPage(&next_block_id);
-    header_page->AddBlockPageId(next_block_id);
-  }
+  this->appendBuckets(header_page, num_buckets);
 }
 
 /*****************************************************************************
@@ -84,11 +79,7 @@ void HASH_TABLE_TYPE::Resize(size_t initial_size) {
   if (header_page->GetSize() > expected_size) return;
   auto old_size = header_page->GetSize();
   header_page->SetSize(expected_size);
-  for (auto index = old_size; index < expected_size; index++) {
-    page_id_t next_block_id;
-    this->buffer_pool_manager_->NewPage(&next_block_id);
-    header_page->AddBlockPageId(next_block_id);
-  }
+  this->appendBuckets(header_page, expected_size - old_size);
 }
 
 /*****************************************************************************
@@ -100,6 +91,10 @@ size_t HASH_TABLE_TYPE::GetSize() {
   return this->getHeaderPage()->GetSize();
 }
 
+
+/*****************************************************************************
+ * UTILITIES
+ *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 HashTableHeaderPage *HASH_TABLE_TYPE::getHeaderPage() {
   return reinterpret_cast<HashTableHeaderPage *>(
@@ -112,6 +107,19 @@ HashTableBlockPage<KeyType, ValueType, KeyComparator> *HASH_TABLE_TYPE::getBlock
   return reinterpret_cast<HashTableBlockPage<KeyType, ValueType, KeyComparator> *>(
       this->buffer_pool_manager_->FetchPage(header_page->GetBlockPageId(bucket_ind))->GetData());
 }
+
+template <typename KeyType, typename ValueType, typename KeyComparator>
+void HASH_TABLE_TYPE::appendBuckets(HashTableHeaderPage* header_page, size_t num_buckets) {
+  for (size_t index = 0; index < num_buckets; index++) {
+    LOG_DEBUG("Add block no %d", static_cast<int>(index));
+    page_id_t next_block_id;
+    assert(this->buffer_pool_manager_->NewPage(&next_block_id) != nullptr);
+    this->buffer_pool_manager_->UnpinPage(next_block_id, true);
+    this->buffer_pool_manager_->FlushPage(next_block_id);
+    header_page->AddBlockPageId(next_block_id);
+  }
+}
+
 
 template class LinearProbeHashTable<int, int, IntComparator>;
 
