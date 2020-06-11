@@ -38,6 +38,40 @@ TEST(HashTableTest, HashTable_Constructor) {
   delete bpm;
 }
 
+
+TEST(HashTableTest, HashTable_Insert) {
+  auto *disk_manager = new DiskManager("test.db");
+  auto *bpm = new BufferPoolManager(30, disk_manager);
+
+  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 20, HashFunction<int>());
+  auto header_page = ht.HeaderPage();
+  EXPECT_EQ(header_page->NumBlocks(), 1);
+
+  std::unordered_map<int, slot_offset_t> expected_index;
+  std::unordered_map<slot_offset_t, int> key_at_index;
+  for(int i = 1; i < 10; i += 2) {
+    EXPECT_EQ(ht.Insert(nullptr, i, i * 2), true);\
+    auto slot_index = ht.GetSlotIndex(i);
+    while (key_at_index.find(slot_index) != key_at_index.end()) {
+      slot_index ++;
+    }
+    expected_index.insert({i, slot_index});
+    key_at_index.insert({slot_index, i});
+  }
+  auto block_page = ht.BlockPage(header_page, 0);
+  for(int i = 1; i < 10; i += 2) {
+    auto slot_offset = expected_index.find(i);
+    LOG_INFO("Offset %d", static_cast<int>(slot_offset->second));
+    EXPECT_EQ(block_page->KeyAt(slot_offset->second), static_cast<int>(i));
+    EXPECT_EQ(block_page->ValueAt(slot_offset->second), static_cast<int>(i * 2));
+  }
+
+  disk_manager->ShutDown();
+  remove("test.db");
+  delete disk_manager;
+  delete bpm;
+}
+
 // NOLINTNEXTLINE
 TEST(HashTableTest, DISABLED_SampleTest) {
   auto *disk_manager = new DiskManager("test.db");

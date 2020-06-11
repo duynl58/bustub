@@ -14,13 +14,14 @@
 
 #include "storage/index/generic_key.h"
 #include "storage/page/hash_table_block_page.h"
+#include "common/logger.h"
 
 namespace bustub {
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 KeyType HASH_TABLE_BLOCK_TYPE::KeyAt(slot_offset_t bucket_ind) const {
   if (!this->IsReadable(bucket_ind)) {
-    throw std::runtime_error("Bucket " + std::to_string(bucket_ind) + "is not readable");
+    throw std::runtime_error("Bucket " + std::to_string(bucket_ind) + " is not readable");
   }
   return this->array_[bucket_ind].first;
 }
@@ -28,7 +29,7 @@ KeyType HASH_TABLE_BLOCK_TYPE::KeyAt(slot_offset_t bucket_ind) const {
 template <typename KeyType, typename ValueType, typename KeyComparator>
 ValueType HASH_TABLE_BLOCK_TYPE::ValueAt(slot_offset_t bucket_ind) const {
   if (!this->IsReadable(bucket_ind)) {
-    throw std::runtime_error("Bucket " + std::to_string(bucket_ind) + "is not readable");
+    throw std::runtime_error("Bucket " + std::to_string(bucket_ind) + " is not readable");
   }
   return this->array_[bucket_ind].second;
 }

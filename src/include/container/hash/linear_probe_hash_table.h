@@ -86,10 +86,19 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
    */
   size_t GetSize();
 
- private:
-  HashTableHeaderPage *getHeaderPage();
-  HashTableBlockPage<KeyType, ValueType, KeyComparator> *getBlockPage(HashTableHeaderPage *header_page,
+  /**
+   * Gets the index of the inserted key
+   */
+  slot_offset_t GetSlotIndex(const KeyType &key);
+
+  /**
+   * Access header page & block pages of the hashtable
+   */
+  HashTableHeaderPage *HeaderPage();
+  HashTableBlockPage<KeyType, ValueType, KeyComparator> *BlockPage(HashTableHeaderPage *header_page,
                                                                       size_t bucket_ind);
+
+ private:
   void appendBuckets(HashTableHeaderPage* header_page, size_t num_buckets);
   // member variable
   std::string name_;

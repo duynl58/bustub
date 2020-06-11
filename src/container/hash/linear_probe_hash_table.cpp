@@ -49,12 +49,16 @@ bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const ValueType &value) {
   // TODO(duynl58) - Lock this transaction, possibly lock the `block` before inserting
-  auto header_page = this->getHeaderPage();
-  auto expected_index = this->hash_fn_.GetHash(key);
+  auto header_page = this->HeaderPage();
+  auto expected_index = this->GetSlotIndex(key);
   for (auto index = expected_index; index < header_page->GetSize(); ++index) {
-    auto block = this->getBlockPage(header_page, index / BLOCK_ARRAY_SIZE);
+    auto block_id = index / BLOCK_ARRAY_SIZE;
+    auto block = this->BlockPage(header_page, block_id);
     auto success = block->Insert(index % BLOCK_ARRAY_SIZE, key, value);
-    if (success) return true;
+    if (success) {
+      this->buffer_pool_manager_->FlushPage(block_id);
+      return true;
+    }
   }
   return false;
 }
@@ -73,13 +77,14 @@ bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const
 template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_TYPE::Resize(size_t initial_size) {
   // TODO(duynl58) Lock this hash table before resizing
-  auto header_page = this->getHeaderPage();
+  auto header_page = this->HeaderPage();
   auto expected_size = initial_size * 2;
   // only grow up in size
   if (header_page->GetSize() > expected_size) return;
   auto old_size = header_page->GetSize();
   header_page->SetSize(expected_size);
   this->appendBuckets(header_page, expected_size - old_size);
+  // TODO(duynl58) re-organize all key-value pairs
 }
 
 /*****************************************************************************
@@ -88,7 +93,7 @@ void HASH_TABLE_TYPE::Resize(size_t initial_size) {
 template <typename KeyType, typename ValueType, typename KeyComparator>
 size_t HASH_TABLE_TYPE::GetSize() {
   // TODO(duynl58) Acquire READ latch before return Size()
-  return this->getHeaderPage()->GetSize();
+  return this->HeaderPage()->GetSize();
 }
 
 
@@ -96,22 +101,27 @@ size_t HASH_TABLE_TYPE::GetSize() {
  * UTILITIES
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
-HashTableHeaderPage *HASH_TABLE_TYPE::getHeaderPage() {
+HashTableHeaderPage *HASH_TABLE_TYPE::HeaderPage() {
   return reinterpret_cast<HashTableHeaderPage *>(
       this->buffer_pool_manager_->FetchPage(this->header_page_id_)->GetData());
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
-HashTableBlockPage<KeyType, ValueType, KeyComparator> *HASH_TABLE_TYPE::getBlockPage(HashTableHeaderPage *header_page,
+HashTableBlockPage<KeyType, ValueType, KeyComparator> *HASH_TABLE_TYPE::BlockPage(HashTableHeaderPage *header_page,
                                                                                      size_t bucket_ind) {
   return reinterpret_cast<HashTableBlockPage<KeyType, ValueType, KeyComparator> *>(
       this->buffer_pool_manager_->FetchPage(header_page->GetBlockPageId(bucket_ind))->GetData());
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
+slot_offset_t HASH_TABLE_TYPE::GetSlotIndex(const KeyType& key) {
+  return this->hash_fn_.GetHash(key) % this->HeaderPage()->GetSize();
+}
+
+template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_TYPE::appendBuckets(HashTableHeaderPage* header_page, size_t num_buckets) {
-  for (size_t index = 0; index < num_buckets; index++) {
-    LOG_DEBUG("Add block no %d", static_cast<int>(index));
+  size_t total_current_buckets = header_page->NumBlocks() * BLOCK_ARRAY_SIZE;
+  for (; total_current_buckets < num_buckets; total_current_buckets += BLOCK_ARRAY_SIZE) {
     page_id_t next_block_id;
     assert(this->buffer_pool_manager_->NewPage(&next_block_id) != nullptr);
     this->buffer_pool_manager_->UnpinPage(next_block_id, true);
