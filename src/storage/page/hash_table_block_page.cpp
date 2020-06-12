@@ -37,34 +37,34 @@ ValueType HASH_TABLE_BLOCK_TYPE::ValueAt(slot_offset_t bucket_ind) const {
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BLOCK_TYPE::Insert(slot_offset_t bucket_ind, const KeyType &key, const ValueType &value) {
-  char expected = 0;
-  if (!this->readable_[bucket_ind].compare_exchange_strong(expected, 1)) {
+  auto offset = bucket_ind / 8;
+  char expected = this->readable_[offset];
+  char desired = expected | (1 << (bucket_ind % 8));
+  if (!this->readable_[offset].compare_exchange_weak(expected, desired)) {
     return false;
   }
+  if (expected == desired) return false;
   this->array_[bucket_ind] = std::make_pair(key, value);
-  this->occupied_[bucket_ind] = 1;
+  this->occupied_[offset] |= 1 << (bucket_ind % 8);
   return true;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_BLOCK_TYPE::Remove(slot_offset_t bucket_ind) {
-  char expected = 1;
-  this->readable_[bucket_ind].compare_exchange_weak(expected, static_cast<char>(0));
+  auto offset = bucket_ind / 8;
+  char expected = this->readable_[offset];
+  char desired = expected & ~(1 << (bucket_ind % 8));
+  this->readable_[offset].compare_exchange_weak(expected, desired);
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BLOCK_TYPE::IsOccupied(slot_offset_t bucket_ind) const {
-  return this->occupied_[bucket_ind] == 1;
+  return (this->occupied_[bucket_ind / 8] >> (bucket_ind % 8)) & 1;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BLOCK_TYPE::IsReadable(slot_offset_t bucket_ind) const {
-  return this->readable_[bucket_ind] == 1;
-}
-
-template <typename KeyType, typename ValueType, typename KeyComparator>
-size_t HASH_TABLE_BLOCK_TYPE::NumberOfSlots() const {
-  return std::size(this->readable_);
+  return (this->readable_[bucket_ind / 8] >> (bucket_ind % 8)) & 1;
 }
 
 // DO NOT REMOVE ANYTHING BELOW THIS LINE
