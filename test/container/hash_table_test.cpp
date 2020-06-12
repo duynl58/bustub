@@ -52,6 +52,18 @@ TEST(HashTableTest, HashTable_FullInsert) {
     EXPECT_EQ(result.size(), 1);
     EXPECT_EQ(result[0], i);
   }
+
+  for (int i = 20; i < 40; i++) {
+    EXPECT_TRUE(ht.Insert(nullptr, i, i));
+  }
+  for (int i = 20; i < 40; i++) {
+    result.clear();
+    ht.GetValue(nullptr, i, &result);
+    EXPECT_EQ(result.size(), 1);
+    EXPECT_EQ(result[0], i);
+  }
+  EXPECT_EQ(ht.GetSize(), 40);
+
   disk_manager->ShutDown();
   remove("test.db");
   delete disk_manager;

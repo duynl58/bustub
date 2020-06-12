@@ -131,6 +131,13 @@ TEST(BufferPoolManagerTest, SampleTest) {
   EXPECT_NE(nullptr, bpm->NewPage(&page_id_temp));
   EXPECT_EQ(nullptr, bpm->FetchPage(0));
 
+  // Scenario: If we delete page 1, we should not be able to read it
+  EXPECT_EQ(true, bpm->UnpinPage(5, true));
+  EXPECT_EQ(true, bpm->DeletePage(5));
+  // DiskManager->DeallocatePage does not do anything for now -> disable the tests below
+  // EXPECT_EQ(nullptr, bpm->FetchPage(5));
+  // EXPECT_NE(nullptr, bpm->NewPage(&page_id_temp));
+
   // Shutdown the disk manager and remove the temporary file we created.
   disk_manager->ShutDown();
   remove("test.db");

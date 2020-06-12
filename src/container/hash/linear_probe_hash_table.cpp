@@ -88,7 +88,10 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
       return true;
     }
   }
-  return false;
+  // come here mean the current hash table is full, we need to resize
+  // TODO(duynl58) - Unlock all pages and transaction before resizing
+  this->Resize(header_page->GetSize());
+  return this->Insert(transaction, key, value);
 }
 
 /*****************************************************************************
