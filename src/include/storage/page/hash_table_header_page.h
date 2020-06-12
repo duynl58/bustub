@@ -89,6 +89,11 @@ class HashTableHeaderPage {
    */
   size_t NumBlocks();
 
+  /**
+   * Reset the block index (for resizing)
+   */
+  void ResetBlockIndex();
+
  private:
   __attribute__((unused)) lsn_t lsn_;
   __attribute__((unused)) size_t size_;

@@ -44,7 +44,12 @@ bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std
   // TODO(duynl58) - Use RWLatch and transaction to lock the page
   auto header_page = this->HeaderPage();
   auto expected_index = this->GetSlotIndex(key);
-  for (auto index = expected_index; index < header_page->GetSize(); ++index) {
+  auto meet_starting_point = false;
+  for (auto index = expected_index;; index = (index + 1) % header_page->GetSize()) {
+    if (index == expected_index) {
+      if (meet_starting_point) break;
+      meet_starting_point = true;
+    }
     auto block = this->BlockPage(header_page, index / BLOCK_ARRAY_SIZE);
     auto data_offset_in_block = index % BLOCK_ARRAY_SIZE;
     if (!block->IsOccupied(data_offset_in_block)) break;
@@ -69,7 +74,12 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
   }
   auto header_page = this->HeaderPage();
   auto expected_index = this->GetSlotIndex(key);
-  for (auto index = expected_index; index < header_page->GetSize(); ++index) {
+  auto meet_starting_point = false;
+  for (auto index = expected_index;; index = (index + 1) % header_page->GetSize()) {
+    if (index == expected_index) {
+      if (meet_starting_point) break;
+      meet_starting_point = true;
+    }
     auto block_id = index / BLOCK_ARRAY_SIZE;
     auto block = this->BlockPage(header_page, block_id);
     auto success = block->Insert(index % BLOCK_ARRAY_SIZE, key, value);
@@ -89,7 +99,12 @@ bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const
   // TODO(duynl58) - Lock this transaction, possibly lock the `block page` before removing
   auto header_page = this->HeaderPage();
   auto expected_index = this->GetSlotIndex(key);
-  for (auto index = expected_index; index < header_page->GetSize(); ++index) {
+  auto meet_starting_point = false;
+  for (auto index = expected_index;; index = (index + 1) % header_page->GetSize()) {
+    if (index == expected_index) {
+      if (meet_starting_point) break;
+      meet_starting_point = true;
+    }
     auto block = this->BlockPage(header_page, index / BLOCK_ARRAY_SIZE);
     auto data_offset_in_block = index % BLOCK_ARRAY_SIZE;
     if (!block->IsOccupied(data_offset_in_block)) break;
@@ -115,7 +130,21 @@ void HASH_TABLE_TYPE::Resize(size_t initial_size) {
   auto old_size = header_page->GetSize();
   header_page->SetSize(expected_size);
   this->appendBuckets(header_page, expected_size - old_size);
-  // TODO(duynl58) re-organize all key-value pairs
+  // re-organize all key-value pairs
+  auto all_old_blocks = std::vector<HashTableBlockPage<KeyType, ValueType, KeyComparator> *>();
+  auto all_block_page_ids = std::vector<page_id_t>();
+  for (size_t idx = 0; idx < header_page->NumBlocks(); idx++) {
+    all_old_blocks.push_back(this->BlockPage(header_page, idx));
+    all_block_page_ids.push_back(header_page->GetBlockPageId(idx));
+  }
+  header_page->ResetBlockIndex();
+  for (size_t idx = 0; idx < header_page->NumBlocks(); idx++) {
+    const auto &block = all_old_blocks[idx];
+    for (size_t pair_idx = 0; pair_idx < BLOCK_ARRAY_SIZE; pair_idx++) {
+      this->Insert(nullptr, block->KeyAt(pair_idx), block->ValueAt(pair_idx));
+    }
+    this->buffer_pool_manager_->DeletePage(all_block_page_ids[idx]);
+  }
 }
 
 /*****************************************************************************

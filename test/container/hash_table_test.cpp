@@ -38,6 +38,26 @@ TEST(HashTableTest, HashTable_Constructor) {
   delete bpm;
 }
 
+TEST(HashTableTest, HashTable_FullInsert) {
+  auto *disk_manager = new DiskManager("test.db");
+  auto *bpm = new BufferPoolManager(30, disk_manager);
+
+  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 20, HashFunction<int>());
+
+  for (int i = 0; i < 20; i++) ht.Insert(nullptr, i, i);
+  std::vector<int> result;
+  for (int i = 0; i < 20; i++) {
+    result.clear();
+    ht.GetValue(nullptr, i, &result);
+    EXPECT_EQ(result.size(), 1);
+    EXPECT_EQ(result[0], i);
+  }
+  disk_manager->ShutDown();
+  remove("test.db");
+  delete disk_manager;
+  delete bpm;
+}
+
 TEST(HashTableTest, HashTable_InsertAndSearch) {
   auto *disk_manager = new DiskManager("test.db");
   auto *bpm = new BufferPoolManager(30, disk_manager);
