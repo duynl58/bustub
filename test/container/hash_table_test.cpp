@@ -38,18 +38,19 @@ TEST(HashTableTest, HashTable_Constructor) {
   delete bpm;
 }
 
-TEST(HashTableTest, HashTable_Insert) {
+TEST(HashTableTest, HashTable_InsertAndSearch) {
   auto *disk_manager = new DiskManager("test.db");
   auto *bpm = new BufferPoolManager(30, disk_manager);
 
-  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 20, HashFunction<int>());
+  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 900, HashFunction<int>());
   auto header_page = ht.HeaderPage();
-  EXPECT_EQ(header_page->NumBlocks(), 1);
+  EXPECT_EQ(header_page->NumBlocks(), 2);
 
   std::unordered_map<int, slot_offset_t> expected_index;
   std::unordered_map<slot_offset_t, int> key_at_index;
-  for (int i = 1; i < 10; i += 2) {
-    EXPECT_EQ(ht.Insert(nullptr, i, i * 2), true);
+  for (int i = 1; i < 500; i += 2) {
+    EXPECT_TRUE(ht.Insert(nullptr, i, i * 2));
+    EXPECT_FALSE(ht.Insert(nullptr, i, i * 2));
     auto slot_index = ht.GetSlotIndex(i);
     while (key_at_index.find(slot_index) != key_at_index.end()) {
       slot_index++;
@@ -58,12 +59,23 @@ TEST(HashTableTest, HashTable_Insert) {
     key_at_index.insert({slot_index, i});
   }
   auto block_page = ht.BlockPage(header_page, 0);
-  for (int i = 1; i < 10; i += 2) {
-    auto slot_offset = expected_index.find(i);
-    LOG_INFO("Offset %d", static_cast<int>(slot_offset->second));
-    EXPECT_EQ(block_page->KeyAt(slot_offset->second), static_cast<int>(i));
-    EXPECT_EQ(block_page->ValueAt(slot_offset->second), static_cast<int>(i * 2));
+  auto block_page_2 = ht.BlockPage(header_page, 1);
+  unsigned number_of_slots = 496;
+  for (int i = 1; i < 500; i += 2) {
+    auto slot_offset = expected_index.find(i)->second;
+    if (slot_offset < number_of_slots) {  // hard code - the number of slots in a block
+      EXPECT_EQ(block_page->KeyAt(slot_offset), static_cast<int>(i));
+      EXPECT_EQ(block_page->ValueAt(slot_offset), static_cast<int>(i * 2));
+    } else {
+      EXPECT_EQ(block_page_2->KeyAt(slot_offset % number_of_slots), static_cast<int>(i));
+      EXPECT_EQ(block_page_2->ValueAt(slot_offset % number_of_slots), static_cast<int>(i * 2));
+    }
   }
+
+  EXPECT_TRUE(ht.Insert(nullptr, 1, 1));
+  std::vector<int> result;
+  ht.GetValue(nullptr, 1, &result);
+  EXPECT_EQ(result.size(), 2);
 
   disk_manager->ShutDown();
   remove("test.db");
@@ -72,7 +84,7 @@ TEST(HashTableTest, HashTable_Insert) {
 }
 
 // NOLINTNEXTLINE
-TEST(HashTableTest, DISABLED_SampleTest) {
+TEST(HashTableTest, SampleTest) {
   auto *disk_manager = new DiskManager("test.db");
   auto *bpm = new BufferPoolManager(50, disk_manager);
 

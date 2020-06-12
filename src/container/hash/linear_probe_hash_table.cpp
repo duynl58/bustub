@@ -41,6 +41,18 @@ HASH_TABLE_TYPE::LinearProbeHashTable(const std::string &name, BufferPoolManager
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std::vector<ValueType> *result) {
+  // TODO(duynl58) - Use RWLatch and transaction to lock the page
+  auto header_page = this->HeaderPage();
+  auto expected_index = this->GetSlotIndex(key);
+  for (auto index = expected_index; index < header_page->GetSize(); ++index) {
+    auto block = this->BlockPage(header_page, index / BLOCK_ARRAY_SIZE);
+    auto data_offset_in_block = index % BLOCK_ARRAY_SIZE;
+    if (!block->IsOccupied(data_offset_in_block)) break;
+    if (block->IsReadable(data_offset_in_block) && this->comparator_(key, block->KeyAt(data_offset_in_block)) == 0) {
+      result->push_back(block->ValueAt(data_offset_in_block));
+    }
+  }
+  if (result->size() > 0) return true;
   return false;
 }
 
@@ -49,7 +61,12 @@ bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const ValueType &value) {
-  // TODO(duynl58) - Lock this transaction, possibly lock the `block` before inserting
+  // TODO(duynl58) - Lock this transaction, possibly lock the `block page` before inserting
+  auto result = std::vector<ValueType>();
+  this->GetValue(transaction, key, &result);
+  if (std::find(result.begin(), result.end(), value) != result.end()) {
+    return false;
+  }
   auto header_page = this->HeaderPage();
   auto expected_index = this->GetSlotIndex(key);
   for (auto index = expected_index; index < header_page->GetSize(); ++index) {
@@ -69,6 +86,19 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const ValueType &value) {
+  // TODO(duynl58) - Lock this transaction, possibly lock the `block page` before removing
+  auto header_page = this->HeaderPage();
+  auto expected_index = this->GetSlotIndex(key);
+  for (auto index = expected_index; index < header_page->GetSize(); ++index) {
+    auto block = this->BlockPage(header_page, index / BLOCK_ARRAY_SIZE);
+    auto data_offset_in_block = index % BLOCK_ARRAY_SIZE;
+    if (!block->IsOccupied(data_offset_in_block)) break;
+    if (block->IsReadable(data_offset_in_block) && this->comparator_(key, block->KeyAt(data_offset_in_block)) == 0 &&
+        value == block->ValueAt(data_offset_in_block)) {
+      block->Remove(data_offset_in_block);
+      return true;
+    }
+  }
   return false;
 }
 

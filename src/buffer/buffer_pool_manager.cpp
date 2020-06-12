@@ -79,7 +79,6 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
   // step 1.1.
   if (iterator != page_table_.end()) {
     // page_id found
-    LOG_INFO("Page id %d", iterator->second);
     replacer_->Pin(iterator->second);
     return GetPages() + iterator->second;
   }
