@@ -10,12 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "storage/page/hash_table_block_page.h"
+
 #include <exception>
 #include <iterator>
 
 #include "common/logger.h"
 #include "storage/index/generic_key.h"
-#include "storage/page/hash_table_block_page.h"
 
 namespace bustub {
 
@@ -65,6 +66,11 @@ bool HASH_TABLE_BLOCK_TYPE::IsOccupied(slot_offset_t bucket_ind) const {
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BLOCK_TYPE::IsReadable(slot_offset_t bucket_ind) const {
   return (this->readable_[bucket_ind / 8] >> (bucket_ind % 8)) & 1;
+}
+
+template <typename KeyType, typename ValueType, typename KeyComparator>
+inline size_t HASH_TABLE_BLOCK_TYPE::NumberOfSlots() {
+  return BLOCK_ARRAY_SIZE;
 }
 
 // DO NOT REMOVE ANYTHING BELOW THIS LINE

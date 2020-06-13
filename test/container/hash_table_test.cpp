@@ -75,12 +75,13 @@ TEST(HashTableTest, HashTable_InsertAndSearch) {
   auto *bpm = new BufferPoolManager(30, disk_manager);
 
   LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 900, HashFunction<int>());
+
   auto header_page = ht.HeaderPage();
   EXPECT_EQ(header_page->NumBlocks(), 2);
 
   std::unordered_map<int, slot_offset_t> expected_index;
   std::unordered_map<slot_offset_t, int> key_at_index;
-  for (int i = 1; i < 500; i += 2) {
+  for (int i = 1; i < 500; i++) {
     EXPECT_TRUE(ht.Insert(nullptr, i, i * 2));
     EXPECT_FALSE(ht.Insert(nullptr, i, i * 2));
     auto slot_index = ht.GetSlotIndex(i);
@@ -90,17 +91,18 @@ TEST(HashTableTest, HashTable_InsertAndSearch) {
     expected_index.insert({i, slot_index});
     key_at_index.insert({slot_index, i});
   }
-  auto block_page = ht.BlockPage(header_page, 0);
-  auto block_page_2 = ht.BlockPage(header_page, 1);
-  unsigned number_of_slots = 496;
-  for (int i = 1; i < 500; i += 2) {
+
+  auto block_pages = std::make_pair(ht.BlockPage(header_page, 0), ht.BlockPage(header_page, 1));
+
+  unsigned number_of_slots = block_pages.first->NumberOfSlots();
+  for (int i = 1; i < 500; i++) {
     auto slot_offset = expected_index.find(i)->second;
     if (slot_offset < number_of_slots) {  // hard code - the number of slots in a block
-      EXPECT_EQ(block_page->KeyAt(slot_offset), static_cast<int>(i));
-      EXPECT_EQ(block_page->ValueAt(slot_offset), static_cast<int>(i * 2));
+      EXPECT_EQ(block_pages.first->KeyAt(slot_offset), static_cast<int>(i));
+      EXPECT_EQ(block_pages.first->ValueAt(slot_offset), static_cast<int>(i * 2));
     } else {
-      EXPECT_EQ(block_page_2->KeyAt(slot_offset % number_of_slots), static_cast<int>(i));
-      EXPECT_EQ(block_page_2->ValueAt(slot_offset % number_of_slots), static_cast<int>(i * 2));
+      EXPECT_EQ(block_pages.second->KeyAt(slot_offset % number_of_slots), static_cast<int>(i));
+      EXPECT_EQ(block_pages.second->ValueAt(slot_offset % number_of_slots), static_cast<int>(i * 2));
     }
   }
 

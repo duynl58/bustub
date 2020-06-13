@@ -98,7 +98,7 @@ class HashTableBlockPage {
    *
    * @return Number of slots
    */
-  size_t NumberOfSlots() const;
+  size_t NumberOfSlots();
 
  private:
   std::atomic_char occupied_[(BLOCK_ARRAY_SIZE - 1) / 8 + 1];
