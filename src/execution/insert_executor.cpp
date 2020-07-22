@@ -9,9 +9,9 @@
 // Copyright (c) 2015-19, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include <memory>
-
 #include "execution/executors/insert_executor.h"
+
+#include <memory>
 
 namespace bustub {
 

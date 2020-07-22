@@ -55,9 +55,13 @@ class SimpleCatalog {
   TableMetadata *CreateTable(Transaction *txn, const std::string &table_name, const Schema &schema) {
     BUSTUB_ASSERT(names_.count(table_name) == 0, "Table names should be unique!");
     int table_oid = this->next_table_oid_;
-    this->next_table_oid_ ++;
+    this->next_table_oid_++;
     this->names_.insert({table_name, table_oid});
-    this->tables_.insert({table_oid, std::make_unique<TableMetadata>(schema, table_name, nullptr, table_oid)});
+    this->tables_.insert(
+        {table_oid,
+         std::make_unique<TableMetadata>(
+             schema, table_name, std::make_unique<TableHeap>(this->bpm_, this->lock_manager_, this->log_manager_, txn),
+             table_oid)});
     return this->tables_[table_oid].get();
   }
 

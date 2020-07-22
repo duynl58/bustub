@@ -10,12 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "type/varlen_type.h"
+
 #include <algorithm>
 #include <string>
 
 #include "common/exception.h"
 #include "type/type_util.h"
-#include "type/varlen_type.h"
 
 namespace bustub {
 #define VARLEN_COMPARE_FUNC(OP)                                               \

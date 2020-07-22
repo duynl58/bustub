@@ -13,6 +13,7 @@
 #pragma once
 
 #include <string>
+
 #include "type/abstract_pool.h"
 #include "type/value.h"
 

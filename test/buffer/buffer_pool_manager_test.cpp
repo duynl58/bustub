@@ -11,8 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "buffer/buffer_pool_manager.h"
+
 #include <cstdio>
 #include <string>
+
 #include "common/logger.h"
 #include "gtest/gtest.h"
 

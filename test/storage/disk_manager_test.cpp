@@ -10,11 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "storage/disk/disk_manager.h"
+
 #include <cstring>
 
 #include "common/exception.h"
 #include "gtest/gtest.h"
-#include "storage/disk/disk_manager.h"
 
 namespace bustub {
 

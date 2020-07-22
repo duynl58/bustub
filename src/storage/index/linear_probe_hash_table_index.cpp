@@ -1,6 +1,6 @@
-#include <vector>
-
 #include "storage/index/linear_probe_hash_table_index.h"
+
+#include <vector>
 
 namespace bustub {
 /*

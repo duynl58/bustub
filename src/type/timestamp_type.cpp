@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "type/timestamp_type.h"
+
 #include <string>
 
 #include "type/boolean_type.h"

@@ -10,10 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "common/rwlatch.h"
+
 #include <thread>  // NOLINT
 #include <vector>
 
-#include "common/rwlatch.h"
 #include "gtest/gtest.h"
 
 namespace bustub {

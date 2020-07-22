@@ -9,10 +9,10 @@
 // Copyright (c) 2015-19, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "execution/executors/hash_join_executor.h"
+
 #include <memory>
 #include <vector>
-
-#include "execution/executors/hash_join_executor.h"
 
 namespace bustub {
 

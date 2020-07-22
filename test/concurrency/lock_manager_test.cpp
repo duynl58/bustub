@@ -10,9 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "concurrency/lock_manager.h"
+
 #include <thread>  // NOLINT
 
-#include "concurrency/lock_manager.h"
 #include "concurrency/transaction_manager.h"
 #include "gtest/gtest.h"
 

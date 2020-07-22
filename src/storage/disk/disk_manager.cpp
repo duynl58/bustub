@@ -10,7 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "storage/disk/disk_manager.h"
+
 #include <sys/stat.h>
+
 #include <cassert>
 #include <cstring>
 #include <iostream>
@@ -19,7 +22,6 @@
 
 #include "common/exception.h"
 #include "common/logger.h"
-#include "storage/disk/disk_manager.h"
 
 namespace bustub {
 

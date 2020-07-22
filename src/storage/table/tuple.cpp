@@ -10,13 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "storage/table/tuple.h"
+
 #include <cassert>
 #include <cstdlib>
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "storage/table/tuple.h"
 
 namespace bustub {
 

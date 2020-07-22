@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "storage/page/hash_table_header_page.h"
+
 #include "common/exception.h"
 #include "common/logger.h"
 

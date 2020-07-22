@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "storage/table/tuple.h"
+
 #include <algorithm>
 #include <cstdio>
 #include <iostream>
@@ -20,7 +22,6 @@
 #include "gtest/gtest.h"
 #include "logging/common.h"
 #include "storage/table/table_heap.h"
-#include "storage/table/tuple.h"
 
 namespace bustub {
 // NOLINTNEXTLINE

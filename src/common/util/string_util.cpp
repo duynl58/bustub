@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "common/util/string_util.h"
+
 #include <algorithm>
 #include <cstdarg>
 #include <cstring>
@@ -18,8 +20,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "common/util/string_util.h"
 
 namespace bustub {
 

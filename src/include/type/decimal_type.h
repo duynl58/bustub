@@ -12,6 +12,7 @@
 
 #pragma once
 #include <string>
+
 #include "type/numeric_type.h"
 
 namespace bustub {

@@ -10,10 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "storage/page/tmp_tuple_page.h"
+
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "storage/page/tmp_tuple_page.h"
 #include "type/value_factory.h"
 
 namespace bustub {

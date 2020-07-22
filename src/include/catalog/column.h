@@ -105,7 +105,9 @@ class Column {
       case TypeId::VARCHAR:
         // TODO(Amadou): Confirm this.
         return 12;
-      default: { UNREACHABLE("Cannot get size of invalid type"); }
+      default: {
+        UNREACHABLE("Cannot get size of invalid type");
+      }
     }
   }
 

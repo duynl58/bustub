@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "buffer/buffer_pool_manager.h"
+
 #include "common/logger.h"
 
 // TODO(duynl58): remember to use RWLatch for all pages

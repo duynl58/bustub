@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "buffer/clock_replacer.h"
+
 #include "common/logger.h"
 
 namespace bustub {

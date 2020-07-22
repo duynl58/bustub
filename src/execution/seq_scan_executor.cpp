@@ -13,10 +13,26 @@
 
 namespace bustub {
 
-SeqScanExecutor::SeqScanExecutor(ExecutorContext *exec_ctx, const SeqScanPlanNode *plan) : AbstractExecutor(exec_ctx) {}
+SeqScanExecutor::SeqScanExecutor(ExecutorContext *exec_ctx, const SeqScanPlanNode *plan)
+    : AbstractExecutor(exec_ctx), plan_(plan) {}
 
-void SeqScanExecutor::Init() {}
+void SeqScanExecutor::Init() {
+  const auto &catalog = this->GetExecutorContext()->GetCatalog();
+  this->table_ = catalog->GetTable(this->plan_->GetTableOid())->table_.get();
+  this->iter_ = std::make_unique<TableIterator>(this->table_->Begin(this->GetExecutorContext()->GetTransaction()));
+}
 
-bool SeqScanExecutor::Next(Tuple *tuple) { return false; }
+bool SeqScanExecutor::Next(Tuple *tuple) {
+  auto &iter = *(this->iter_);
+  while (iter != this->table_->End()) {
+    auto tup = *(iter++);
+    auto eval = this->plan_->GetPredicate()->Evaluate(&tup, this->GetOutputSchema());
+    if (eval.GetAs<bool>()) {
+      *tuple = Tuple(tup);
+      return true;
+    }
+  }
+  return false;
+}
 
 }  // namespace bustub

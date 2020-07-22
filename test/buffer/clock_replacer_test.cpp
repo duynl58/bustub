@@ -10,11 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "buffer/clock_replacer.h"
+
 #include <cstdio>
 #include <thread>  // NOLINT
 #include <vector>
 
-#include "buffer/clock_replacer.h"
 #include "gtest/gtest.h"
 
 namespace bustub {

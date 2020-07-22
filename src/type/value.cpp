@@ -10,12 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "type/value.h"
+
 #include <cassert>
 #include <string>
 #include <utility>
 
 #include "common/exception.h"
-#include "type/value.h"
 
 namespace bustub {
 Value::Value(const Value &other) {

@@ -10,10 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "type/integer_parent_type.h"
+
 #include <cassert>
 #include <cmath>
-
-#include "type/integer_parent_type.h"
 
 namespace bustub {
 IntegerParentType::IntegerParentType(TypeId type) : NumericType(type) {}

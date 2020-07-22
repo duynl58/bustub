@@ -12,6 +12,7 @@
 
 #pragma once
 #include <string>
+
 #include "common/exception.h"
 #include "type/numeric_type.h"
 

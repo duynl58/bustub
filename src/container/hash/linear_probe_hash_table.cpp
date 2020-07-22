@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "container/hash/linear_probe_hash_table.h"
+
 #include <iostream>
 #include <string>
 #include <utility>
@@ -18,7 +20,6 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/rid.h"
-#include "container/hash/linear_probe_hash_table.h"
 
 namespace bustub {
 

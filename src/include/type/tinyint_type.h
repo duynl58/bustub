@@ -12,6 +12,7 @@
 
 #pragma once
 #include <string>
+
 #include "type/integer_parent_type.h"
 
 namespace bustub {
