@@ -42,10 +42,12 @@ class InsertExecutor : public AbstractExecutor {
 
   // Note that Insert does not make use of the tuple pointer being passed in.
   // We return false if the insert failed for any reason, and return true if all inserts succeeded.
-  bool Next([[maybe_unused]] Tuple *tuple) override;
+  bool Next([[maybe_unused]] Tuple *) override;
 
  private:
   /** The insert plan node to be executed. */
   const InsertPlanNode *plan_;
+  TableHeap *table_;
+  std::unique_ptr<AbstractExecutor> child_exe_;
 };
 }  // namespace bustub

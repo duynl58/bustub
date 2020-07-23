@@ -54,9 +54,7 @@ std::unique_ptr<AbstractExecutor> ExecutorFactory::CreateExecutor(ExecutorContex
       return std::make_unique<AggregationExecutor>(exec_ctx, agg_plan, std::move(child_executor));
     }
 
-    default: {
-      BUSTUB_ASSERT(false, "Unsupported plan type.");
-    }
+    default: { BUSTUB_ASSERT(false, "Unsupported plan type."); }
   }
 }
 }  // namespace bustub

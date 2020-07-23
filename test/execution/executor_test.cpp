@@ -121,7 +121,6 @@ class ExecutorTest : public ::testing::Test {
   static constexpr uint32_t MAX_VARCHAR_SIZE = 128;
 };
 
-// NOLINTNEXTLINE
 TEST_F(ExecutorTest, SimpleSeqScanTest) {
   // SELECT colA, colB FROM test_1 WHERE colA < 500
   TableMetadata *table_info = GetExecutorContext()->GetCatalog()->GetTable("test_1");
@@ -148,8 +147,7 @@ TEST_F(ExecutorTest, SimpleSeqScanTest) {
   ASSERT_EQ(num_tuples, 500);
 }
 
-// NOLINTNEXTLINE
-TEST_F(ExecutorTest, DISABLED_SimpleRawInsertTest) {
+TEST_F(ExecutorTest, SimpleRawInsertTest) {
   // INSERT INTO empty_table2 VALUES (100, 10), (101, 11), (102, 12)
   // Create Values to insert
   std::vector<Value> val1{ValueFactory::GetIntegerValue(100), ValueFactory::GetIntegerValue(10)};
@@ -178,26 +176,25 @@ TEST_F(ExecutorTest, DISABLED_SimpleRawInsertTest) {
   ASSERT_TRUE(scan_executor->Next(&tuple));
   ASSERT_EQ(tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>(), 100);
   ASSERT_EQ(tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>(), 10);
-  std::cout << tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>() << ", "
-            << tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>() << std::endl;
+  // std::cout << tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>() << ", "
+  //           << tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>() << std::endl;
   // Second value
   ASSERT_TRUE(scan_executor->Next(&tuple));
   ASSERT_EQ(tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>(), 101);
   ASSERT_EQ(tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>(), 11);
-  std::cout << tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>() << ", "
-            << tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>() << std::endl;
+  // std::cout << tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>() << ", "
+  //           << tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>() << std::endl;
   // Third value
   ASSERT_TRUE(scan_executor->Next(&tuple));
   ASSERT_EQ(tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>(), 102);
   ASSERT_EQ(tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>(), 12);
-  std::cout << tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>() << ", "
-            << tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>() << std::endl;
+  // std::cout << tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>() << ", "
+  //           << tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>() << std::endl;
   // End
   ASSERT_FALSE(scan_executor->Next(&tuple));
 }
 
-// NOLINTNEXTLINE
-TEST_F(ExecutorTest, DISABLED_SimpleSelectInsertTest) {
+TEST_F(ExecutorTest, SimpleSelectInsertTest) {
   // INSERT INTO empty_table2 SELECT colA, colB FROM test_1 WHERE colA < 500
   std::unique_ptr<AbstractPlanNode> scan_plan1;
   const Schema *out_schema1;
@@ -244,10 +241,10 @@ TEST_F(ExecutorTest, DISABLED_SimpleSelectInsertTest) {
               tuple2.GetValue(out_schema2, out_schema2->GetColIdx("colA")).GetAs<int32_t>());
     ASSERT_EQ(tuple1.GetValue(out_schema1, out_schema1->GetColIdx("colB")).GetAs<int32_t>(),
               tuple2.GetValue(out_schema2, out_schema2->GetColIdx("colB")).GetAs<int32_t>());
-    std::cout << tuple1.GetValue(out_schema1, out_schema1->GetColIdx("colA")).GetAs<int32_t>() << ", "
-              << tuple1.GetValue(out_schema1, out_schema1->GetColIdx("colB")).GetAs<int32_t>() << ", "
-              << tuple2.GetValue(out_schema2, out_schema2->GetColIdx("colA")).GetAs<int32_t>() << ", "
-              << tuple2.GetValue(out_schema2, out_schema2->GetColIdx("colB")).GetAs<int32_t>() << std::endl;
+    // std::cout << tuple1.GetValue(out_schema1, out_schema1->GetColIdx("colA")).GetAs<int32_t>() << ", "
+    //           << tuple1.GetValue(out_schema1, out_schema1->GetColIdx("colB")).GetAs<int32_t>() << ", "
+    //           << tuple2.GetValue(out_schema2, out_schema2->GetColIdx("colA")).GetAs<int32_t>() << ", "
+    //           << tuple2.GetValue(out_schema2, out_schema2->GetColIdx("colB")).GetAs<int32_t>() << std::endl;
     num_tuples++;
   }
   ASSERT_EQ(num_tuples, 500);

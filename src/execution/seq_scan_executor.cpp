@@ -26,8 +26,11 @@ bool SeqScanExecutor::Next(Tuple *tuple) {
   auto &iter = *(this->iter_);
   while (iter != this->table_->End()) {
     auto tup = *(iter++);
-    auto eval = this->plan_->GetPredicate()->Evaluate(&tup, this->GetOutputSchema());
-    if (eval.GetAs<bool>()) {
+    auto eval = true;
+    if (this->plan_->GetPredicate() != nullptr) {
+      eval = this->plan_->GetPredicate()->Evaluate(&tup, this->GetOutputSchema()).GetAs<bool>();
+    }
+    if (eval) {
       *tuple = Tuple(tup);
       return true;
     }
