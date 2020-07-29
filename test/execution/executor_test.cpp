@@ -250,8 +250,7 @@ TEST_F(ExecutorTest, SimpleSelectInsertTest) {
   ASSERT_EQ(num_tuples, 500);
 }
 
-// NOLINTNEXTLINE
-TEST_F(ExecutorTest, DISABLED_SimpleHashJoinTest) {
+TEST_F(ExecutorTest, SimpleHashJoinTest) {
   // INSERT INTO empty_table2 SELECT colA, colB FROM test_1 WHERE colA < 500
   std::unique_ptr<AbstractPlanNode> scan_plan1;
   const Schema *out_schema1;
@@ -297,11 +296,12 @@ TEST_F(ExecutorTest, DISABLED_SimpleHashJoinTest) {
   uint32_t num_tuples = 0;
   std::cout << "ColA, ColB, Col1, Col2" << std::endl;
   while (executor->Next(&tuple)) {
-    std::cout << tuple.GetValue(out_final, out_schema1->GetColIdx("colA")).GetAs<int32_t>() << ", "
-              << tuple.GetValue(out_final, out_schema1->GetColIdx("colB")).GetAs<int32_t>() << ", "
-              << tuple.GetValue(out_final, out_schema2->GetColIdx("col1")).GetAs<int16_t>() << ", "
-              << tuple.GetValue(out_final, out_schema2->GetColIdx("col2")).GetAs<int32_t>() << std::endl;
-
+    ASSERT_EQ(tuple.GetValue(out_final, out_schema1->GetColIdx("colA")).GetAs<int16_t>(),
+              tuple.GetValue(out_final, out_schema2->GetColIdx("col1")).GetAs<int16_t>());
+    // std::cout << tuple.GetValue(out_final, out_schema1->GetColIdx("colA")).GetAs<int32_t>() << ", "
+    //           << tuple.GetValue(out_final, out_schema1->GetColIdx("colB")).GetAs<int32_t>() << ", "
+    //           << tuple.GetValue(out_final, out_schema2->GetColIdx("col1")).GetAs<int16_t>() << ", "
+    //           << tuple.GetValue(out_final, out_schema2->GetColIdx("col2")).GetAs<int32_t>() << std::endl;
     num_tuples++;
   }
   ASSERT_EQ(num_tuples, 100);

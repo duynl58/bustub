@@ -10,9 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 #include "execution/executors/insert_executor.h"
-#include "common/logger.h"
 
 #include <memory>
+
+#include "common/logger.h"
 
 namespace bustub {
 

@@ -70,7 +70,7 @@ class SimpleHashJoinHashTable {
    * @param h the hash key
    * @param[out] t the list of tuples that matched the key
    */
-  void GetValue(Transaction *txn, hash_t h, std::vector<Tuple> *t) { *t = hash_table_[h]; }
+  std::vector<Tuple> &GetValue(Transaction *txn, hash_t h) { return hash_table_[h]; }
 
  private:
   std::unordered_map<hash_t, std::vector<Tuple>> hash_table_;
@@ -99,7 +99,7 @@ class HashJoinExecutor : public AbstractExecutor {
                    std::unique_ptr<AbstractExecutor> &&right);
 
   /** @return the JHT in use. Do not modify this function, otherwise you will get a zero. */
-  // Uncomment me! const HT *GetJHT() const { return &jht_; }
+  const HT *GetJHT() const { return &jht_; }
 
   const Schema *GetOutputSchema() override { return plan_->OutputSchema(); }
 
@@ -132,13 +132,19 @@ class HashJoinExecutor : public AbstractExecutor {
  private:
   /** The hash join plan node. */
   const HashJoinPlanNode *plan_;
+  std::vector<const AbstractExpression *> exprs_;
+  /** The left executor and right executor. */
+  std::unique_ptr<AbstractExecutor> left_, right_;
+  /** Current state of our loop */
+  hash_t current_hash_val_;
+  std::vector<Tuple>::iterator current_tup_ite_;
   /** The comparator is used to compare hashes. */
   [[maybe_unused]] HashComparator jht_comp_{};
   /** The identity hash function. */
   IdentityHashFunction jht_hash_fn_{};
 
   /** The hash table that we are using. */
-  // Uncomment me! HT jht_;
+  HT jht_;
   /** The number of buckets in the hash table. */
   static constexpr uint32_t jht_num_buckets_ = 2;
 };
