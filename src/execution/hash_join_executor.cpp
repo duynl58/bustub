@@ -44,7 +44,7 @@ bool HashJoinExecutor::Next(Tuple *tuple) {
   }
   const auto &found_tuples = this->jht_.GetValue(this->GetExecutorContext()->GetTransaction(), this->current_hash_val_);
   if (this->current_tup_ite_ == found_tuples.end()) {
-    if (!his->right_->Next(tuple)) {
+    if (!this->right_->Next(tuple)) {
       return false;
     }
     this->current_hash_val_ = this->HashValues(tuple, this->right_->GetOutputSchema(), this->exprs_);
