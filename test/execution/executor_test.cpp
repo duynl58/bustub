@@ -308,7 +308,7 @@ TEST_F(ExecutorTest, SimpleHashJoinTest) {
 }
 
 // NOLINTNEXTLINE
-TEST_F(ExecutorTest, DISABLED_SimpleAggregationTest) {
+TEST_F(ExecutorTest, SimpleAggregationTest) {
   // SELECT COUNT(colA), SUM(colA), min(colA), max(colA) from test_1;
   std::unique_ptr<AbstractPlanNode> scan_plan;
   const Schema *scan_schema;
@@ -361,7 +361,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleAggregationTest) {
 }
 
 // NOLINTNEXTLINE
-TEST_F(ExecutorTest, DISABLED_SimpleGroupByAggregation) {
+TEST_F(ExecutorTest, SimpleGroupByAggregation) {
   // SELECT count(colA), colB, sum(C) FROM test_1 Group By colB HAVING count(colA) > 100
   std::unique_ptr<AbstractPlanNode> scan_plan;
   const Schema *scan_schema;
@@ -405,6 +405,9 @@ TEST_F(ExecutorTest, DISABLED_SimpleGroupByAggregation) {
   std::unordered_set<int32_t> encountered;
   std::cout << "countA, colB, sumC" << std::endl;
   while (executor->Next(&tuple)) {
+    std::cout << tuple.GetValue(agg_schema, agg_schema->GetColIdx("countA")).GetAs<int32_t>() << ", "
+              << tuple.GetValue(agg_schema, agg_schema->GetColIdx("colB")).GetAs<int32_t>() << ", "
+              << tuple.GetValue(agg_schema, agg_schema->GetColIdx("sumC")).GetAs<int32_t>() << std::endl;
     // Should have countA > 100
     ASSERT_GT(tuple.GetValue(agg_schema, agg_schema->GetColIdx("countA")).GetAs<int32_t>(), 100);
     // Should have unique colBs.
@@ -413,10 +416,6 @@ TEST_F(ExecutorTest, DISABLED_SimpleGroupByAggregation) {
     encountered.insert(colB);
     // Sanity check: ColB should also be within [0, 10).
     ASSERT_TRUE(0 <= colB && colB < 10);
-
-    std::cout << tuple.GetValue(agg_schema, agg_schema->GetColIdx("countA")).GetAs<int32_t>() << ", "
-              << tuple.GetValue(agg_schema, agg_schema->GetColIdx("colB")).GetAs<int32_t>() << ", "
-              << tuple.GetValue(agg_schema, agg_schema->GetColIdx("sumC")).GetAs<int32_t>() << std::endl;
   }
 }
 

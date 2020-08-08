@@ -18,14 +18,51 @@ namespace bustub {
 
 AggregationExecutor::AggregationExecutor(ExecutorContext *exec_ctx, const AggregationPlanNode *plan,
                                          std::unique_ptr<AbstractExecutor> &&child)
-    : AbstractExecutor(exec_ctx) {}
+    : AbstractExecutor(exec_ctx),
+      plan_(plan),
+      child_(std::move(child)),
+      aht_(plan->GetAggregates(), plan->GetAggregateTypes()),
+      aht_iterator_(aht_.Begin()) {}
 
 const AbstractExecutor *AggregationExecutor::GetChildExecutor() const { return child_.get(); }
 
 const Schema *AggregationExecutor::GetOutputSchema() { return plan_->OutputSchema(); }
 
-void AggregationExecutor::Init() {}
+void AggregationExecutor::Init() {
+  this->child_->Init();
+  Tuple tuple;
+  while (this->child_->Next(&tuple)) {
+    auto key = this->MakeKey(&tuple);
+    auto value = this->MakeVal(&tuple);
+    this->aht_.InsertCombine(key, value);
+  }
+  this->aht_iterator_ = this->aht_.Begin();
+}
 
-bool AggregationExecutor::Next(Tuple *tuple) { return false; }
+bool AggregationExecutor::Next(Tuple *tuple) {
+  while (this->aht_iterator_ != this->aht_.End()) {
+    const auto &agg_key = this->aht_iterator_.Key();
+    const auto &agg_val = this->aht_iterator_.Val();
+    ++this->aht_iterator_;
+    if (this->plan_->GetHaving() == nullptr) {
+      *tuple = Tuple(agg_val.aggregates_, this->GetOutputSchema());
+      return true;
+    }
+    /**
+     * Note: in the tests, when the having clause is null, it means that we're currently not running a group by query.
+     * 		However, in real tests, there should be cases that there is a group by condition without having clause.
+     * 		Therefore, if you want perfection, please consider this case.
+     */
+    if (this->plan_->GetHaving()->EvaluateAggregate(agg_key.group_bys_, agg_val.aggregates_).GetAs<bool>()) {
+      std::vector<Value> result;
+      for (auto &column : this->GetOutputSchema()->GetColumns()) {
+        result.push_back(column.GetExpr()->EvaluateAggregate(agg_key.group_bys_, agg_val.aggregates_));
+      }
+      *tuple = Tuple(result, this->GetOutputSchema());
+      return true;
+    }
+  }
+  return false;
+}
 
 }  // namespace bustub
