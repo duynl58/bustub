@@ -44,16 +44,8 @@ bool AggregationExecutor::Next(Tuple *tuple) {
     const auto &agg_key = this->aht_iterator_.Key();
     const auto &agg_val = this->aht_iterator_.Val();
     ++this->aht_iterator_;
-    if (this->plan_->GetHaving() == nullptr) {
-      *tuple = Tuple(agg_val.aggregates_, this->GetOutputSchema());
-      return true;
-    }
-    /**
-     * Note: in the tests, when the having clause is null, it means that we're currently not running a group by query.
-     * 		However, in real tests, there should be cases that there is a group by condition without having clause.
-     * 		Therefore, if you want perfection, please consider this case.
-     */
-    if (this->plan_->GetHaving()->EvaluateAggregate(agg_key.group_bys_, agg_val.aggregates_).GetAs<bool>()) {
+    if ((this->plan_->GetHaving() == nullptr) ||
+        (this->plan_->GetHaving()->EvaluateAggregate(agg_key.group_bys_, agg_val.aggregates_).GetAs<bool>())) {
       std::vector<Value> result;
       for (auto &column : this->GetOutputSchema()->GetColumns()) {
         result.push_back(column.GetExpr()->EvaluateAggregate(agg_key.group_bys_, agg_val.aggregates_));
