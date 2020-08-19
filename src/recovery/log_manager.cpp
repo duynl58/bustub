@@ -22,12 +22,40 @@ namespace bustub {
  *
  * This thread runs forever until system shutdown/StopFlushThread
  */
-void LogManager::RunFlushThread() {}
+void LogManager::RunFlushThread() {
+  bustub::enable_logging = true;
+  std::unique_lock<std::mutex> lock(this->latch_, std::defer_lock);
+  this->flush_thread_ = new std::thread([this, &lock]() {
+    while (true) {
+      lock.lock();
+      this->cv_.wait_for(lock, log_timeout);
+      if (this->stop_flush_thread_) {
+        this->stop_flush_thread_ = false;
+        return;
+      }
+      // if the LogBuffer is full || force flush || timeout -> flush
+      std::swap(this->log_buffer_, this->flush_buffer_);
+      this->disk_manager_->WriteLog(flush_buffer_, strlen(flush_buffer_));
+      this->offset_ = 0;
+      this->SetPersistentLSN(this->GetNextLSN());
+      lock.unlock();
+    }
+  });
+}
 
 /*
  * Stop and join the flush thread, set enable_logging = false
  */
-void LogManager::StopFlushThread() {}
+void LogManager::StopFlushThread() {
+  bustub::enable_logging = false;
+  this->stop_flush_thread_ = true;
+  this->flush_thread_->join();
+}
+
+/**
+ * Force flush the current LogManager
+ */
+void LogManager::ForceFlush() { this->cv_.notify_one(); }
 
 /*
  * append a log record into log buffer
@@ -49,6 +77,45 @@ void LogManager::StopFlushThread() {}
  *  }
  *
  */
-lsn_t LogManager::AppendLogRecord(LogRecord *log_record) { return INVALID_LSN; }
+lsn_t LogManager::AppendLogRecord(LogRecord *log_record) {
+  if (log_record->GetLogRecordType() == LogRecordType::INVALID) return INVALID_LSN;
+  std::unique_lock<std::mutex> lock(this->latch_);
+  log_record->SetLSN(this->next_lsn_++);
+  // serialize header of log_record
+  memcpy(log_buffer_ + offset_, log_record, LogRecord::HEADER_SIZE);
+  // serialize data of log_record
+  this->offset_ += LogRecord::HEADER_SIZE;
+  // serialize INSERT LogRecord
+  if (log_record->GetLogRecordType() == LogRecordType::INSERT) {
+    memcpy(log_buffer_ + this->offset_, &(log_record->GetInsertRID()), sizeof(RID));
+    this->offset_ += sizeof(RID);
+    log_record->GetInsertTuple().SerializeTo(log_buffer_ + this->offset_);
+    this->offset_ += log_record->GetInsertTuple().GetLength();
+  }
+  // serialize DELETE LogRecord
+  if (log_record->GetLogRecordType() == LogRecordType::APPLYDELETE ||
+      log_record->GetLogRecordType() == LogRecordType::MARKDELETE ||
+      log_record->GetLogRecordType() == LogRecordType::ROLLBACKDELETE) {
+    memcpy(log_buffer_ + this->offset_, &(log_record->GetDeleteRID()), sizeof(RID));
+    this->offset_ += sizeof(RID);
+    log_record->GetDeleteTuple().SerializeTo(log_buffer_ + this->offset_);
+    this->offset_ += log_record->GetDeleteTuple().GetLength();
+  }
+  // serialize UPDATE LogRecord
+  if (log_record->GetLogRecordType() == LogRecordType::UPDATE) {
+    memcpy(log_buffer_ + this->offset_, &(log_record->GetUpdateRID()), sizeof(RID));
+    this->offset_ += sizeof(RID);
+    log_record->GetOriginalTuple().SerializeTo(log_buffer_ + this->offset_);
+    log_record->GetUpdateTuple().SerializeTo(log_buffer_ + this->offset_ + log_record->GetOriginalTuple().GetLength());
+    this->offset_ += log_record->GetOriginalTuple().GetLength() + log_record->GetUpdateTuple().GetLength();
+  }
+  // serialize NEWPAGE LogRecord
+  if (log_record->GetLogRecordType() == LogRecordType::NEWPAGE) {
+    memcpy(log_buffer_ + this->offset_, &(log_record->GetNewPageRecord()), sizeof(page_id_t));
+    this->offset_ += sizeof(page_id_t);
+  }
+  // otherwise, there is no need to serialize anymore (besides the header) -> return
+  return log_record->GetLSN();
+}
 
 }  // namespace bustub

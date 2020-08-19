@@ -126,11 +126,13 @@ class LogRecord {
 
   inline RID &GetUpdateRID() { return update_rid_; }
 
-  inline page_id_t GetNewPageRecord() { return prev_page_id_; }
+  inline page_id_t &GetNewPageRecord() { return prev_page_id_; }
 
   inline int32_t GetSize() { return size_; }
 
   inline lsn_t GetLSN() { return lsn_; }
+
+  inline void SetLSN(lsn_t lsn) { this->lsn_ = lsn; }
 
   inline txn_id_t GetTxnId() { return txn_id_; }
 
