@@ -24,11 +24,11 @@ namespace bustub {
  */
 void LogManager::RunFlushThread() {
   bustub::enable_logging = true;
-  std::unique_lock<std::mutex> lock(this->latch_, std::defer_lock);
-  this->flush_thread_ = new std::thread([this, &lock]() {
+  this->flush_thread_ = new std::thread([this]() {
     while (true) {
-      lock.lock();
-      this->cv_.wait_for(lock, log_timeout);
+      std::unique_lock<std::mutex> lock(this->latch_);
+      this->cv_.wait_for(lock, log_timeout, [this] { return this->force_flush_flag_; });
+      this->force_flush_flag_ = false;
       if (this->stop_flush_thread_) {
         this->stop_flush_thread_ = false;
         return;
@@ -55,7 +55,11 @@ void LogManager::StopFlushThread() {
 /**
  * Force flush the current LogManager
  */
-void LogManager::ForceFlush() { this->cv_.notify_one(); }
+void LogManager::ForceFlush() {
+  std::lock_guard<std::mutex> lock(this->latch_);
+  this->force_flush_flag_ = true;
+  this->cv_.notify_one();
+}
 
 /*
  * append a log record into log buffer

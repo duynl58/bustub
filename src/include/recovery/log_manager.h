@@ -56,6 +56,7 @@ class LogManager {
   // TODO(students): you may add your own member variables
   size_t offset_;
   std::atomic_bool stop_flush_thread_;
+  bool force_flush_flag_;
 
   /** The atomic counter which records the next log sequence number. */
   std::atomic<lsn_t> next_lsn_;

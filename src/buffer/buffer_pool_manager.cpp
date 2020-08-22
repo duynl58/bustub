@@ -108,6 +108,9 @@ bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
   page->pin_count_--;
   if (page->pin_count_ <= 0) {
     replacer_->Unpin(iterator->second);
+    if (this->log_manager_ != nullptr && page->GetLSN() > this->log_manager_->GetPersistentLSN()) {
+      this->log_manager_->ForceFlush();
+    }
   }
   page->is_dirty_ |= is_dirty;
   return true;

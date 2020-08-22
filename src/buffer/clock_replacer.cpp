@@ -51,7 +51,7 @@ bool ClockReplacer::Victim(frame_id_t *frame_id) {
   }
 }
 
-// this function is  not thread-safe. Don't call this directly
+// this function is not thread-safe. Don't call this directly
 void ClockReplacer::PinImpl(frame_id_t frame_id) {
   auto found_iterator = this->pin_pos_.find(frame_id);
   if (found_iterator != this->pin_pos_.end()) {
