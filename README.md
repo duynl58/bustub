@@ -5,19 +5,14 @@
 - [x] Query Execution
 - [ ] Logging & Recovery
 
-# Build
+## Note
 
-## Linux / Mac
-To ensure that you have the proper packages installed on your machine, run `sudo build_support/packages.sh`. Then run:
+I'm no longer trying to finish this educational database management system because I'm pursuing higher education in DBMS.
 
-```
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-make
-```
-Debug build enables [AddressSanitizer](https://github.com/google/sanitizers), which can generate false positives for overflow on STL containers. If you encounter this, define the environment variable `ASAN_OPTIONS=detect_container_overflow=0`.
+Therefore, I probably won't work on the last assignment.
 
-# Testing
-```
-cd build
-make check-tests
-```
+Furthermore, my implementation probably contains many bugs, as I did not test it carefully.
+
+However, for students who haven't figured how to start/make progress on the **CMU 15-445/645** assignments, this can be a good hint for you.
+
+Many thanks for your understanding!
